@@ -26,7 +26,7 @@ RUN apt-get install -y curl grep sed dpkg && \
 	
 RUN conda create -n py37 -y python=3.7 \
       numpy pandas scipy matplotlib seaborn \
-	  h5py \
+	  h5py pyarrow \
       notebook 
 
 WORKDIR /root
