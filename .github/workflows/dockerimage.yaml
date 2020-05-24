@@ -32,8 +32,8 @@ jobs:
       run: docker push ody55eus/trajectory-recognition:$(date +%s)
   
   push-evaluate:
+    steps:
     - uses: actions/checkout@v1
     - name: Pushes Evaluate docker image
-    steps:
       run: docker tag evaluate:$(date +%s) ody55eus/evaluate:$(date +%s)
       run: docker push ody55eus/evaluate:$(date +%s)
