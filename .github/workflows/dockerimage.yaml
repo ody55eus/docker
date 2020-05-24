@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
 
-  build:
+  build-trajectory:
 
     runs-on: ubuntu-latest
 
@@ -12,3 +12,28 @@ jobs:
     - uses: actions/checkout@v1
     - name: Build the Docker image
       run: docker build . --file trajectory-recognition/Dockerfile --tag trajectory-recognition:$(date +%s)
+
+
+  build-evaluate:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Build the Docker image
+      run: docker build . --file evaluate/Dockerfile --tag evaluate:$(date +%s)
+
+
+  push-trajectory:
+    steps:
+    - uses: actions/checkout@v1
+    - name: Pushes Trajectory docker image
+      run: docker tag trajectory-recognition:$(date +%s) ody55eus/trajectory-recognition:$(date +%s)
+      run: docker push ody55eus/trajectory-recognition:$(date +%s)
+  
+  push-evaluate:
+    - uses: actions/checkout@v1
+    - name: Pushes Evaluate docker image
+    steps:
+      run: docker tag evaluate:$(date +%s) ody55eus/evaluate:$(date +%s)
+      run: docker push ody55eus/evaluate:$(date +%s)
