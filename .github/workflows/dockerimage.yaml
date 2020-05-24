@@ -10,8 +10,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
-    - name: Build the Docker image
-      run: docker build . --file trajectory-recognition/Dockerfile --tag trajectory-recognition:$(date +%s)
+    - name: Build the trajectory Docker image
+      run: |
+       docker build . --file trajectory-recognition/Dockerfile --tag trajectory-recognition:$(date +%s)
+       docker tag trajectory-recognition:$(date +%s) ody55eus/trajectory-recognition:$(date +%s)
+       docker push ody55eus/trajectory-recognition:$(date +%s)
 
 
   build-evaluate:
@@ -20,20 +23,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
-    - name: Build the Docker image
-      run: docker build . --file evaluate/Dockerfile --tag evaluate:$(date +%s)
-
-
-  push-trajectory:
-    steps:
-    - uses: actions/checkout@v1
-    - name: Pushes Trajectory docker image
-      run: docker tag trajectory-recognition:$(date +%s) ody55eus/trajectory-recognition:$(date +%s)
-      run: docker push ody55eus/trajectory-recognition:$(date +%s)
-  
-  push-evaluate:
-    steps:
-    - uses: actions/checkout@v1
-    - name: Pushes Evaluate docker image
-      run: docker tag evaluate:$(date +%s) ody55eus/evaluate:$(date +%s)
-      run: docker push ody55eus/evaluate:$(date +%s)
+    - name: Build the evaluate Docker image
+      run: |
+       docker build . --file evaluate/Dockerfile --tag evaluate:$(date +%s)
+       docker tag evaluate:$(date +%s) ody55eus/evaluate:$(date +%s)
+       docker push ody55eus/evaluate:$(date +%s)
