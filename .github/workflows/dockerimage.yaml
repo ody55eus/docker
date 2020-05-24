@@ -9,12 +9,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v1
     - name: Build the trajectory Docker image
-      run: |
-       docker build . --file trajectory-recognition/Dockerfile --tag trajectory-recognition:$(date +%s)
-       docker tag trajectory-recognition:$(date +%s) ody55eus/trajectory-recognition:$(date +%s)
-       docker push ody55eus/trajectory-recognition:$(date +%s)
+      uses: docker/build-push-action@v1
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        repository: ody55eus/trajectory-recognition
+        file: trajectory-recognition/Dockerfile
+        tags: latest
 
 
   build-evaluate:
@@ -22,9 +24,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v1
     - name: Build the evaluate Docker image
-      run: |
-       docker build . --file evaluate/Dockerfile --tag evaluate:$(date +%s)
-       docker tag evaluate:$(date +%s) ody55eus/evaluate:$(date +%s)
-       docker push ody55eus/evaluate:$(date +%s)
+      uses: docker/build-push-action@v1
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        file: evaluate/Dockerfile
+        repository: ody55eus/evaluate
+        tags: latest
