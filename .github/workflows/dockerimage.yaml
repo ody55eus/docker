@@ -3,7 +3,6 @@ name: Docker image
 on: [push]
 
 jobs:
-
   build-trajectory:
 
     runs-on: ubuntu-latest
@@ -38,4 +37,22 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
         dockerfile: evaluate/Dockerfile
         repository: ody55eus/evaluate
+        tags: latest
+
+  build-flowers:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Build the evaluate Docker image
+      uses: docker/build-push-action@v1
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        dockerfile: flowers/Dockerfile
+        repository: ody55eus/flowers
+        build_args: KAGGLE_USERNAME=${{ secrets.KaggleUsername }},KAGGLE_KEY=${{ secrets.KaggleKey }}
         tags: latest
