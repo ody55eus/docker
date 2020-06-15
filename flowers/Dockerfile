@@ -3,8 +3,7 @@ FROM python:3.7
 
 WORKDIR /root
 
-ENV KAGGLE_USERNAME=$INPUT_KAGGLE_USERNAME
-ENV KAGGLE_KEY=$INPUT_KAGGLE_KEY
+ADD kaggle.json /root/.kaggle/kaggle.json
 
 RUN python -m pip install --upgrade pip
 RUN pip install pytest kaggle

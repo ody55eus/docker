@@ -46,6 +46,11 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v2
+    
+    - name: write kagglejson
+      run: echo "$KAGGLEJSON" > kaggle.json
+      env:
+        KAGGLEJSON: ${{ secrets.KAGGLEJSON }}
 
     - name: Build the flowers Docker image
       uses: docker/build-push-action@v1
@@ -54,8 +59,4 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
         dockerfile: flowers/Dockerfile
         repository: ody55eus/flowers
-        build_args: KAGGLE_USERNAME=$KAGGLE_USERNAME,KAGGLE_KEY=$KAGGLE_KEY
         tags: latest
-      env:
-        KAGGLE_USERNAME: ${{ secrets.KaggleUsername }}
-        KAGGLE_KEY: ${{ secrets.KaggleKey }}
