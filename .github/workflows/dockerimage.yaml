@@ -54,5 +54,8 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
         dockerfile: flowers/Dockerfile
         repository: ody55eus/flowers
-        build_args: KAGGLE_USERNAME=${{ secrets.KaggleUsername }},KAGGLE_KEY=${{ secrets.KaggleKey }}
+        build_args: KAGGLE_USERNAME=$KAGGLE_USERNAME,KAGGLE_KEY=$KAGGLE_KEY
         tags: latest
+      env:
+        KAGGLE_USERNAME: ${{ secrets.KaggleUsername }}
+        KAGGLE_KEY: ${{ secrets.KaggleKey }}
