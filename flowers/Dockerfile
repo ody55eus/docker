@@ -3,6 +3,9 @@ FROM python:3.7
 
 WORKDIR /root
 
+ENV KAGGLE_USERNAME=$INPUT_KAGGLE_USERNAME
+ENV KAGGLE_KEY=$INPUT_KAGGLE_KEY
+
 RUN python -m pip install --upgrade pip
 RUN pip install pytest kaggle
 RUN pip install keras-preprocessing numpy pandas scikit-learn scipy seaborn tensorboard tensorflow>=2.2 tensorflow-probability opencv-python pydot==1.2.3 jupyterlab
