@@ -99,10 +99,9 @@ publish
 
 ** Ana
 This image contains Ana (Python Data Analysis Framework) and other software and data necessary to reproduce the results of my master thesis.
-
 *** Alpine Linux
   This [[file:ana/alpine/Dockerfile][Dockerfile]] is based on the latest Linux Alpine (=alpine:latest=) image. It is smaller and contains only the newest and barely necessary packages. This is the preferred image to analyze data.
-
+**** Dockerfile
 #+begin_src dockerfile :tangle ana/alpine/Dockerfile
 # Python Analysis Docker Image
 FROM alpine:latest
@@ -167,8 +166,32 @@ WORKDIR /root
 
 #+end_src
 
+**** GitHub Actions
+#+begin_src yaml
+  build-ana:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Build the ana Docker image
+      uses: docker/build-push-action@v1
+      env:
+        SSH_PRIVATE_KEY: ${{ secrects.SSH_PRIVATE_KEY }}
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        repository: ody55eus/ana
+        dockerfile: ana/alpine/Dockerfile
+        tags: alpine
+#+end_src
+
 *** Python 3.9 / Debian Bullseye (11.0)
   This [[file:ana/bullseye/Dockerfile][Dockerfile]] is based on the latest Debian Linux (=python:3.9-bullseye=) image. Debian provides older, but more stable packages.
+****  Dockerfile
 #+begin_src dockerfile :tangle ana/bullseye/Dockerfile
 # Python Analysis Docker Image
 FROM python:3.9-bullseye
@@ -222,6 +245,29 @@ RUN mkdir -p /root/Projects/Code && \
 
 WORKDIR /root
 
+#+end_src
+
+**** GitHub Actions
+#+begin_src yaml
+  build-ana-bullseye:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Build the ana bullseye Docker image
+      uses: docker/build-push-action@v1
+      env:
+        SSH_PRIVATE_KEY: ${{ secrects.SSH_PRIVATE_KEY }}
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        repository: ody55eus/ana
+        dockerfile: ana/bullseye/Dockerfile
+        tags: bullseye
 #+end_src
 
 ** Evaluate
@@ -365,4 +411,17 @@ WORKDIR /root
 
 
 #+end_src
+* License
+  Copyright (C) 2021 Jonathan Pieper
 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation version 3.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
