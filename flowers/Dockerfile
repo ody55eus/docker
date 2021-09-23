@@ -19,7 +19,7 @@ RUN mkdir data/data1
 RUN mkdir data/data2
 
 # Download images from Kaggle
-WORKDIR /root/data/data1 
+WORKDIR /root/data/data1
 RUN kaggle datasets download mgornergoogle/five-flowers
 RUN unzip five-flowers.zip && rm five-flowers.zip
 
@@ -31,4 +31,3 @@ RUN unzip flower-goggle-tpu-classification.zip && rm flower-goggle-tpu-classific
 RUN rm /root/.kaggle/kaggle.json
 
 WORKDIR /root
-

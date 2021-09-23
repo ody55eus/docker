@@ -22,4 +22,3 @@ RUN pip3 install numpy virtualenv opencv-python scikit-learn scikit-image
 RUN pip3 install pybgs
 
 WORKDIR /root
-

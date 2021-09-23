@@ -3,20 +3,294 @@
 This repository contains all my public Dockerfiles.
 Each folder represents a different project.
 
+* Publish
+An image to publish documents via \LaTeX, PlantUML, and Emacs.
+#+begin_src dockerfile :tangle publish/Dockerfile
+# IMAGE: docker build . -t ody55eus/publish:base
+FROM python:3.9-bullseye
+MAINTAINER Jonathan Pieper <ody55eus@mailbox.org>
+
+# Install system packages
+RUN apt-get update --fix-missing && apt-get upgrade -y && \
+    apt-get install -y \
+    curl git nodejs default-jre cabal-install \
+    texlive-science texlive-latex-extra texlive-publishers \
+    dvipng man-db cm-super graphviz emacs && \
+    apt-get --purge remove -y .\*-doc$ && \
+    apt-get clean -y && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Install PlantUML
+RUN curl -L http://sourceforge.net/projects/plantuml/files/plantuml.jar/download > /usr/local/bin/plantuml.jar
+
+# Install Pandoc
+# see <https://github.com/pandoc/dockerfiles/blob/master/ubuntu/Dockerfile#L33>
+ARG pandoc_commit=master
+RUN git clone --branch=$pandoc_commit --depth=1 --quiet \
+  https://github.com/jgm/pandoc /usr/src/pandoc
+
+# Install Haskell dependencies
+COPY cabal.root.config /root/.cabal/config
+RUN cabal --version \
+  && ghc --version \
+  && cabal new-update
+
+WORKDIR /usr/src/pandoc
+# Add pandoc-crossref to project
+ARG without_crossref=
+RUN test -n "$without_crossref" || \
+    printf "extra-packages: pandoc-crossref\n" > cabal.project.local;
+
+# Additional projects to compile alongside pandoc
+ARG extra_packages="pandoc-crossref" # pandoc-citeproc
+
+RUN cabal new-update \
+  && cabal new-build \
+      --disable-tests \
+      --jobs \
+      . $extra_packages
+
+# Cabal's exec stripping doesn't seem to work reliably, let's do it here.
+RUN find dist-newstyle \
+         -name 'pandoc*' -type f -perm -u+x \
+         -exec strip '{}' ';' \
+         -exec cp '{}' /usr/local/bin/ ';'
+
+WORKDIR /root
+#+end_src
 * Ana
 This image contains Ana (Python Data Analysis Framework) and other software and data necessary to reproduce the results of my master thesis.
 
-- Alpine Linux
+** Alpine Linux
   This [[file:ana/alpine/Dockerfile][Dockerfile]] is based on the latest Linux Alpine (=alpine:latest=) image. It is smaller and contains only the newest and barely necessary packages. This is the preferred image to analyze data.
 
-- Python 3.9 / Debian Bullseye (11.0)
+#+begin_src dockerfile :tangle ana/alpine/Dockerfile
+# Python Analysis Docker Image
+FROM alpine:latest
+MAINTAINER Jonathan Pieper <ody55eus@mailbox.org>
+
+ENV LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
+
+# Install system packages
+RUN apk add --no-cache \
+    curl git nodejs openssh-client make \
+    libgfortran build-base hdf5-dev \
+    texmf-dist-most texlive-xetex texlive-luatex \
+    texlive-dvi texmf-dist-langextra \
+    openjdk11-jre graphviz emacs \
+    python3 py3-pip py3-scipy py3-pandas py3-matplotlib
+
+# Make sure pdftex.map is available
+# see https://gitlab.alpinelinux.org/alpine/aports/-/issues/12834
+RUN mktexlsr && \
+    updmap-sys --syncwithtrees && \
+    fmtutil-sys --all
+
+# add credentials to download extra software
+ARG SSH_PRIVATE_KEY
+RUN mkdir /root/.ssh/ && \
+    echo "${SSH_PRIVATE_KEY}" > /root/.ssh/id_rsa && \
+    chmod 700 /root/.ssh && \
+    chmod 600 /root/.ssh/id_rsa
+
+# Trust my private GitLab server
+RUN touch /root/.ssh/known_hosts && \
+    ssh-keyscan -p 223 gitlab.ody5.de >> /root/.ssh/known_hosts
+
+# Download and install analysis software and data
+RUN mkdir /opt/lab-book && \
+    git clone ssh://git@gitlab.ody5.de:223/agm/spectrumanalyzer.git /opt/lab-book/spectrumanalyzer && \
+    git clone --recursive ssh://git@gitlab.ody5.de:223/agm/ana.git /opt/lab-book/ana && \
+    git clone ssh://git@gitlab.ody5.de:223/agm/method-paper.git /root/Projects/Code/method-paper
+
+# Remove private SSH Key so nobody can use it.
+RUN rm /root/.ssh/id_rsa
+
+# Install Python packages
+RUN ln -s /usr/bin/python3 /usr/bin/python && \
+    python -m pip install --upgrade pip && \
+    python -m pip install --upgrade seaborn h5py plantuml && \
+    python -m pip install git+https://github.com/garrettj403/SciencePlots.git
+
+# Install Analysis modules
+RUN cd /opt/lab-book/spectrumanalyzer && python -m pip install -e . && \
+    cd /opt/lab-book/ana && python -m pip install -e .
+
+# Remove unnecessary packages
+RUN apk --no-cache del build-base
+
+# Link Projects
+RUN mkdir -p /root/Projects/Code && \
+    ln -s /root/Projects/Code/method-paper /root/Projects/Method-Paper && \
+    ln -s /opt/lab-book /root/Projects/Code/lab-book
+
+WORKDIR /root
+
+#+end_src
+
+** Python 3.9 / Debian Bullseye (11.0)
   This [[file:ana/bullseye/Dockerfile][Dockerfile]] is based on the latest Debian Linux (=python:3.9-bullseye=) image. Debian provides older, but more stable packages.
+#+begin_src dockerfile :tangle ana/bullseye/Dockerfile
+# Python Analysis Docker Image
+FROM python:3.9-bullseye
+MAINTAINER Jonathan Pieper <ody55eus@mailbox.org>
+
+ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
+
+# Install system packages
+RUN apt-get update --fix-missing && apt-get install -y \
+    git nodejs default-jre \
+    texlive texlive-science texlive-latex-extra texlive-xetex texlive-publishers \
+    dvipng man-db cm-super graphviz emacs && \
+    apt-get --purge remove -y .\*-doc$ && \
+    apt-get clean -y && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# add credentials to download extra software
+ARG SSH_PRIVATE_KEY
+RUN mkdir /root/.ssh/ && \
+    echo "${SSH_PRIVATE_KEY}" > /root/.ssh/id_rsa && \
+    chmod 700 /root/.ssh && \
+    chmod 600 /root/.ssh/id_rsa
+
+# Trust my private GitLab server
+RUN touch /root/.ssh/known_hosts && \
+    ssh-keyscan -p 223 gitlab.ody5.de >> /root/.ssh/known_hosts
+
+# Download and install analysis software and data
+RUN mkdir /opt/lab-book && \
+    git clone ssh://git@gitlab.ody5.de:223/agm/spectrumanalyzer.git /opt/lab-book/spectrumanalyzer && \
+    git clone --recursive ssh://git@gitlab.ody5.de:223/agm/ana.git /opt/lab-book/ana && \
+    git clone ssh://git@gitlab.ody5.de:223/agm/method-paper.git /root/Projects/Code/method-paper
+
+# Remove private SSH Key so nobody can use it.
+RUN rm /root/.ssh/id_rsa
+
+# Install Python packages
+    RUN python -m pip install --upgrade pip && \
+    python -m pip install --upgrade \
+    numpy pandas scipy matplotlib seaborn h5py plantuml && \
+    python -m pip install git+https://github.com/garrettj403/SciencePlots.git
+
+# Install Analysis modules
+RUN cd /opt/lab-book/spectrumanalyzer && python -m pip install -e . && \
+    cd /opt/lab-book/ana && python -m pip install -e .
+
+# Link Projects
+RUN mkdir -p /root/Projects/Code && \
+    ln -s /root/Projects/Code/method-paper /root/Projects/Method-Paper && \
+    ln -s /opt/lab-book /root/Projects/Code/lab-book
+
+WORKDIR /root
+
+#+end_src
 
 * Evaluate
 This [[file:evaluate/Dockerfile][Dockerfile]] installs Python and Anaconda on a plain Debian Linux image.
+#+begin_src dockerfile :tangle evaluate/Dockerfile
+# IMAGE: docker build . -t ody55eus/evaluate:base
+FROM debian:latest
+
+WORKDIR /root
+
+ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
+ENV PATH /opt/conda/bin:$PATH
+
+RUN apt-get update --fix-missing && apt-get install -y wget bzip2 ca-certificates \
+    libglib2.0-0 libxext6 libsm6 libxrender1 \
+    git mercurial subversion
+
+RUN wget --quiet https://repo.anaconda.com/archive/Anaconda3-5.3.0-Linux-x86_64.sh -O ~/anaconda.sh && \
+    /bin/bash ~/anaconda.sh -b -p /opt/conda && \
+    rm ~/anaconda.sh && \
+    ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
+    echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
+    echo "conda activate base" >> ~/.bashrc
+
+RUN apt-get install -y curl grep sed dpkg && \
+    TINI_VERSION=`curl https://github.com/krallin/tini/releases/latest | grep -o "/v.*\"" | sed 's:^..\(.*\).$:\1:'` && \
+    curl -L "https://github.com/krallin/tini/releases/download/v${TINI_VERSION}/tini_${TINI_VERSION}.deb" > tini.deb && \
+    dpkg -i tini.deb && \
+    rm tini.deb && \
+    apt-get clean
+
+RUN conda create -n py37 -y python=3.7 \
+      numpy pandas scipy matplotlib seaborn \
+	  h5py pyarrow \
+      notebook
+
+WORKDIR /root
+
+
+#+end_src
 
 * Flowers
 This [[file:flowers/Dockerfile][Dockerfile]] installs all software and images necessary to classify flowers. It contains images from two different Kaggle challenges designed to learn the features of flowers. It provides the base image for the flowers project.
+#+begin_src dockerfile :tangle flowers/Dockerfile
+# IMAGE: docker build . -t ody55eus/flowers
+FROM python:3.7
+
+WORKDIR /root
+
+# Add Kaggle API
+ADD kaggle.json /root/.kaggle/kaggle.json
+RUN chmod 600 /root/.kaggle/kaggle.json
+
+# Install Python Requirements
+RUN python -m pip install --upgrade pip
+RUN pip install pytest kaggle
+RUN pip install keras-preprocessing numpy pandas scikit-learn scipy seaborn tensorboard tensorflow>=2.2 tensorflow-probability opencv-python pydot==1.2.3 jupyterlab
+RUN pip install Pillow
+
+# Create Data Directories
+RUN mkdir data
+RUN mkdir data/data1
+RUN mkdir data/data2
+
+# Download images from Kaggle
+WORKDIR /root/data/data1
+RUN kaggle datasets download mgornergoogle/five-flowers
+RUN unzip five-flowers.zip && rm five-flowers.zip
+
+WORKDIR /root/data/data2
+RUN kaggle datasets download ianmoone0617/flower-goggle-tpu-classification
+RUN unzip flower-goggle-tpu-classification.zip && rm flower-goggle-tpu-classification.zip
+
+# Delete Kaggle API Key
+RUN rm /root/.kaggle/kaggle.json
+
+WORKDIR /root
+
+
+#+end_src
 
 * Trajectory-Recognition
 This [[file:trajectory-recognition/Dockerfile][Dockerfile]] installs Python and OpenCV together with pybgs to detect a background in a video. It provides the base image for the trajectory-recognition project published on GitLab.
+#+begin_src dockerfile :tangle trajectory-recognition/Dockerfile
+# IMAGE: docker build . -t ody55eus/trajecog:base
+FROM debian:latest
+
+WORKDIR /root
+
+# Install dependencies
+RUN apt update && apt upgrade && apt install -y \
+    build-essential \
+    cmake \
+    pkg-config \
+    wget \
+    git \
+    unzip \
+    nano \
+    curl \
+	python3-pip \
+    libopencv-dev \
+    && apt-get autoclean && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+RUN pip3 install numpy virtualenv opencv-python scikit-learn scikit-image
+RUN pip3 install pybgs
+
+WORKDIR /root
+
+
+#+end_src
