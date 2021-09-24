@@ -3,21 +3,10 @@
 This repository contains all my public Dockerfiles.
 Each folder represents a different project.
 
-* GitHub Actions
-Prepair the [[file:.github/workflows/dockerimage.yaml][GitHub Workflows YAML-Configuration]]:
-#+begin_src yaml :tangle .github/workflows/dockerimage.yaml
-name: Docker image
-
-on: [push]
-
-jobs:
-#+end_src
-
 * Dockerfiles
 ** Emacs-Straight
 Builds on [[*Publish][Publish]] and installs
-*** Software
-**** PlantUML
+*** Paths
 This Dockerfile installs PlantUML as ~.jar~ file inside ~/usr/local/bin/plantuml.jar~
 #+NAME: puml-file
 #+begin_src sh :exports no
@@ -53,13 +42,13 @@ There's a [[https://systemcrafters.cc/advanced-package-management/using-straight
 #+begin_src emacs-lisp :tangle emacs-straight/straight.el
 (defvar bootstrap-version)
 (let ((bootstrap-file
-      (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
       (bootstrap-version 5))
   (unless (file-exists-p bootstrap-file)
     (with-current-buffer
         (url-retrieve-synchronously
-        "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
-        'silent 'inhibit-cookies)
+         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
       (goto-char (point-max))
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
@@ -70,6 +59,8 @@ There's a [[https://systemcrafters.cc/advanced-package-management/using-straight
 (straight-use-package 'org-roam)
 (straight-use-package 'plantuml-mode)
 (setq plantuml-jar-path "<<puml-file>>")
+(unless (file-exists-p plantuml-jar-path)
+  (plantuml-download-jar))
 #+end_src
 
 *** Dockerfile
@@ -78,12 +69,21 @@ There's a [[https://systemcrafters.cc/advanced-package-management/using-straight
 FROM ody55eus/publish
 MAINTAINER Jonathan Pieper <jpieper@mailbox.org>
 
-COPY emacs-straight/straight.el ~/.emacs.d/init.el
-RUN emacs --quick --script ~/.emacs.d/init.el
-
+RUN mkdir -p /root/.emacs.d
+COPY emacs-straight/straight.el /root/.emacs.d/init.el
+RUN emacs --quick --script /root/.emacs.d/init.el
 #+end_src
 
 *** GitHub Actions
+This section in the [[file:.github/workflows/dockerimage.yaml][GitHub Actions YAML-Configuration]] asks GitHub to create and push the new docker container on every commit:
+#+begin_src yaml :tangle .github/workflows/dockerimage.yaml :exports no
+name: Docker image
+
+on: [push]
+
+jobs:
+#+end_src
+
 #+name:image-straight
 #+begin_src conf :noweb yes :exports no
 emacs-straight
@@ -167,6 +167,7 @@ WORKDIR /root
 #+end_src
 
 *** GitHub Actions
+This section in the [[file:.github/workflows/dockerimage.yaml][GitHub Actions YAML-Configuration]] asks GitHub to create and push the new docker container on every commit:
 #+name:image-name1
 #+begin_src conf :noweb yes :exports no
 publish
@@ -506,6 +507,7 @@ WORKDIR /root
 
 
 #+end_src
+
 * License
   Copyright (C) 2021 Jonathan Pieper
 
