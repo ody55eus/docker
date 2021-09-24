@@ -82,6 +82,33 @@ COPY emacs-straight/straight.el ~/.emacs.d/init.el
 RUN emacs --quick --script ~/.emacs.d/init.el
 
 #+end_src
+
+*** GitHub Actions
+#+name:image-straight
+#+begin_src conf :noweb yes :exports no
+emacs-straight
+#+end_src
+
+#+begin_src yaml :tangle .github/workflows/dockerimage.yaml :noweb yes
+  build-<<image-straight>>:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Build the <<image-straight>> Docker image
+      uses: docker/build-push-action@v1
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        repository: ody55eus/<<image-straight>>
+        dockerfile: <<image-straight>>/Dockerfile
+        tags: latest
+#+end_src
+
 ** Publish
 An image to publish documents via \LaTeX, pandoc, PlantUML, and Emacs.
 *** Dockerfile
@@ -141,7 +168,7 @@ WORKDIR /root
 
 *** GitHub Actions
 #+name:image-name1
-#+begin_src conf :noweb yes
+#+begin_src conf :noweb yes :exports no
 publish
 #+end_src
 
