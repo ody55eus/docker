@@ -1,4 +1,4 @@
-# IMAGE: docker build . -t ody55eus/publish:base
+# IMAGE: docker build . -t ody55eus/publish:latest
 FROM python:3.9-bullseye
 MAINTAINER Jonathan Pieper <ody55eus@mailbox.org>
 

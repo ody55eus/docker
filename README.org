@@ -14,11 +14,79 @@ jobs:
 #+end_src
 
 * Dockerfiles
-** Publish
-An image to publish documents via \LaTeX, PlantUML, and Emacs.
+** Emacs-Straight
+Builds on [[*Publish][Publish]] and installs
+*** Software
+**** PlantUML
+This Dockerfile installs PlantUML as ~.jar~ file inside ~/usr/local/bin/plantuml.jar~
+#+NAME: puml-file
+#+begin_src sh :exports no
+/usr/local/bin/plantuml.jar
+#+end_src
+*** Straight.el
+There's a [[https://systemcrafters.cc/advanced-package-management/using-straight-el/][System Crafters project]] about installation and usage of straight.
+
+#+begin_src emacs-lisp :exports no :tangle emacs-straight/straight.el
+;;; straight.el --- ody55eus/emacs-straight-*- lexical-binding: t; -*-
+;;
+;; Copyright (C) 2021 Jonathan Pieper
+;;
+;; Author: Jonathan Pieper <https://github.com/jp>
+;; Maintainer: Jonathan Pieper <ody55eus@mailbox.org>
+;; Created: September 24, 2021
+;; Modified: September 24, 2021
+;; Version: 0.0.1
+;; Keywords: abbrev bib c calendar comm convenience data docs emulations extensions faces files frames games hardware help hypermedia i18n internal languages lisp local maint mail matching mouse multimedia news outlines processes terminals tex tools unix vc wp
+;; Homepage: https://github.com/jp/packages
+;; Package-Requires: ((emacs "24.3"))
+;;
+;; This file is not part of GNU Emacs.
+;;
+;;; Commentary:
+;;
+;;
+;;
+;;; Code:
+#+end_src
+
+**** Install Straight via Bootstrap
+#+begin_src emacs-lisp :tangle emacs-straight/straight.el
+(defvar bootstrap-version)
+(let ((bootstrap-file
+      (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+      (bootstrap-version 5))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+        "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+        'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
+#+end_src
+
+**** Install Packages
+#+begin_src emacs-lisp :tangle emacs-straight/straight.el :noweb yes
+(straight-use-package 'org-roam)
+(straight-use-package 'plantuml-mode)
+(setq plantuml-jar-path "<<puml-file>>")
+#+end_src
+
 *** Dockerfile
-#+begin_src dockerfile :tangle publish/Dockerfile
-# IMAGE: docker build . -t ody55eus/publish:base
+#+begin_src dockerfile :tangle emacs-straight/Dockerfile
+# IMAGE: docker build . -t ody55eus/emacs-straight:latest
+FROM ody55eus/publish
+MAINTAINER Jonathan Pieper <jpieper@mailbox.org>
+
+COPY emacs-straight/straight.el ~/.emacs.d/init.el
+RUN emacs --quick --script ~/.emacs.d/init.el
+
+#+end_src
+** Publish
+An image to publish documents via \LaTeX, pandoc, PlantUML, and Emacs.
+*** Dockerfile
+#+begin_src dockerfile :tangle publish/Dockerfile :noweb yes
+# IMAGE: docker build . -t ody55eus/publish:latest
 FROM python:3.9-bullseye
 MAINTAINER Jonathan Pieper <ody55eus@mailbox.org>
 
@@ -33,7 +101,7 @@ RUN apt-get update --fix-missing && apt-get upgrade -y && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install PlantUML
-RUN curl -L http://sourceforge.net/projects/plantuml/files/plantuml.jar/download > /usr/local/bin/plantuml.jar
+RUN curl -L http://sourceforge.net/projects/plantuml/files/plantuml.jar/download > <<puml-file>>
 
 # Install Pandoc
 # see <https://github.com/pandoc/dockerfiles/blob/master/ubuntu/Dockerfile#L33>
