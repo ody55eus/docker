@@ -7,7 +7,7 @@ RUN apt update --fix-missing && apt upgrade -y && apt install -y \
     curl git nodejs default-jre cabal-install \
     texlive-science texlive-latex-extra texlive-publishers \
     dvipng man-db cm-super graphviz && \
-    apt-get build-dep emacs && \
+    apt-get build-dep emacs -y && \
     apt-get --purge remove -y .\*-doc$ && \
     apt-get clean -y && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
