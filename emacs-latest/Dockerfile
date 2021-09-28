@@ -2,6 +2,7 @@
 FROM debian:latest
 MAINTAINER Jonathan Pieper <jpieper@mailbox.org>
 
+RUN echo "deb-src http://deb.debian.org/debian bullseye main" >> /etc/apt/sources.list
 RUN apt update --fix-missing && apt upgrade -y && apt install -y \
     curl git nodejs default-jre cabal-install \
     texlive-science texlive-latex-extra texlive-publishers \
