@@ -181,7 +181,7 @@ RUN emacs --quick --script /root/.emacs.d/init.el
 
 ** GitLab CI/CD
 
-#+begin_src yaml :tangle ./.gitlab-ci.yml
+#+begin_src yaml
 img-emacs-straight:
   stage: emacs
   variables:
@@ -202,7 +202,7 @@ This section in the [[file:.github/workflows/dockerimage.yaml][GitHub Actions YA
 emacs-straight
 #+end_src
 
-#+begin_src yaml :tangle .github/workflows/dockerimage.yaml :noweb yes
+#+begin_src yaml :noweb yes
   build-<<image-straight>>:
 
     runs-on: ubuntu-latest
@@ -287,7 +287,7 @@ WORKDIR /root
 #+end_src
 
 ** GitLab CI/CD
-#+begin_src yaml :tangle ./.gitlab-ci.yml
+#+begin_src yaml
 img-publish:
   stage: emacs
   variables:
@@ -307,7 +307,7 @@ This section in the [[file:.github/workflows/dockerimage.yaml][GitHub Actions YA
 publish
 #+end_src
 
-#+begin_src yaml :tangle .github/workflows/dockerimage.yaml :noweb yes
+#+begin_src yaml :noweb yes
   build-<<image-name1>>:
 
     runs-on: ubuntu-latest
