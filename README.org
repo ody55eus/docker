@@ -3,19 +3,33 @@
 This repository contains all my public Dockerfiles.
 Each folder represents a different project.
 
-* Dockerfiles
-** Emacs-Straight
-Builds on [[*Publish][Publish]] and installs
-*** Paths
-This Dockerfile installs PlantUML as ~.jar~ file inside ~/usr/local/bin/plantuml.jar~
-#+NAME: puml-file
-#+begin_src sh :exports no
-/usr/local/bin/plantuml.jar
-#+end_src
-*** Straight.el
+* Table of Contents :TOC:
+- [[#emacs-straight][Emacs-Straight]]
+  - [[#straightel][Straight.el]]
+  - [[#dockerfile][Dockerfile]]
+  - [[#gitlab-cicd][GitLab CI/CD]]
+  - [[#github-actions][GitHub Actions]]
+- [[#publish][Publish]]
+  - [[#plantuml][PlantUML]]
+  - [[#dockerfile-1][Dockerfile]]
+  - [[#gitlab-cicd-1][GitLab CI/CD]]
+  - [[#github-actions-1][GitHub Actions]]
+- [[#ana][Ana]]
+  - [[#alpine-linux][Alpine Linux]]
+  - [[#python-39--debian-bullseye-110][Python 3.9 / Debian Bullseye (11.0)]]
+- [[#evaluate][Evaluate]]
+- [[#flowers][Flowers]]
+  - [[#dockerfile-2][Dockerfile]]
+  - [[#github-actions-2][Github Actions]]
+- [[#trajectory-recognition][Trajectory-Recognition]]
+- [[#license][License]]
+
+* Emacs-Straight
+Builds on [[*Publish][Publish]] and installs the package manager straight.el.
+** Straight.el
 There's a [[https://systemcrafters.cc/advanced-package-management/using-straight-el/][System Crafters project]] about installation and usage of straight.
 
-#+begin_src emacs-lisp :exports no :tangle emacs-straight/straight.el
+#+begin_src emacs-lisp :exports none :tangle emacs-straight/straight.el
 ;;; straight.el --- ody55eus/emacs-straight-*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2021 Jonathan Pieper
@@ -38,7 +52,7 @@ There's a [[https://systemcrafters.cc/advanced-package-management/using-straight
 ;;; Code:
 #+end_src
 
-**** Install Straight via Bootstrap
+*** Install Straight via Bootstrap
 #+begin_src emacs-lisp :tangle emacs-straight/straight.el
 (defvar bootstrap-version)
 (let ((bootstrap-file
@@ -54,7 +68,7 @@ There's a [[https://systemcrafters.cc/advanced-package-management/using-straight
   (load bootstrap-file nil 'nomessage))
 #+end_src
 
-**** Install Packages
+*** Install Packages
 #+begin_src emacs-lisp :tangle emacs-straight/straight.el :noweb yes
 (straight-use-package 'org-roam)
 (straight-use-package 'plantuml-mode)
@@ -63,7 +77,7 @@ There's a [[https://systemcrafters.cc/advanced-package-management/using-straight
   (plantuml-download-jar))
 #+end_src
 
-*** Dockerfile
+** Dockerfile
 #+begin_src dockerfile :tangle emacs-straight/Dockerfile
 # IMAGE: docker build . -t ody55eus/emacs-straight:latest
 FROM ody55eus/publish
@@ -74,9 +88,41 @@ COPY emacs-straight/straight.el /root/.emacs.d/init.el
 RUN emacs --quick --script /root/.emacs.d/init.el
 #+end_src
 
-*** GitHub Actions
+** GitLab CI/CD
+
+#+begin_src yaml :tangle ./.gitlab-ci.yml :exports none
+image: docker:stable
+services:
+- docker:dind
+stages:
+- emacs
+- publish
+variables:
+  DOCKER_PLATFORMS: linux/amd64,linux/arm64/v8
+variables:
+  # Use TLS https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#tls-enabled
+  DOCKER_HOST: tcp://docker:2376
+  DOCKER_TLS_CERTDIR: "/certs"
+before_script:
+  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+#+end_src
+
+#+begin_src yaml :tangle ./.gitlab-ci.yml
+img-emacs-straight:
+  stage: emacs
+  variables:
+    CI_REGISTRY_IMAGE: ody55eus/emacs-straight
+    CI_PATH: emacs-straight
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE $CI_PATH
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker push $CI_REGISTRY_IMAGE:latest
+  resource_group: group-emacs
+#+end_src
+
+** GitHub Actions
 This section in the [[file:.github/workflows/dockerimage.yaml][GitHub Actions YAML-Configuration]] asks GitHub to create and push the new docker container on every commit:
-#+begin_src yaml :tangle .github/workflows/dockerimage.yaml :exports no
+#+begin_src yaml :tangle .github/workflows/dockerimage.yaml :exports none
 name: Docker image
 
 on: [push]
@@ -85,7 +131,7 @@ jobs:
 #+end_src
 
 #+name:image-straight
-#+begin_src conf :noweb yes :exports no
+#+begin_src conf :noweb yes :exports none
 emacs-straight
 #+end_src
 
@@ -109,9 +155,16 @@ emacs-straight
         tags: latest
 #+end_src
 
-** Publish
+* Publish
 An image to publish documents via \LaTeX, pandoc, PlantUML, and Emacs.
-*** Dockerfile
+** PlantUML
+This Dockerfile installs PlantUML as ~.jar~ file inside ~/usr/local/bin/plantuml.jar~
+#+NAME: puml-file
+#+begin_src sh :exports none
+/usr/local/bin/plantuml.jar
+#+end_src
+
+** Dockerfile
 #+begin_src dockerfile :tangle publish/Dockerfile :noweb yes
 # IMAGE: docker build . -t ody55eus/publish:latest
 FROM python:3.9-bullseye
@@ -166,10 +219,24 @@ RUN find dist-newstyle \
 WORKDIR /root
 #+end_src
 
-*** GitHub Actions
+** GitLab CI/CD
+#+begin_src yaml :tangle ./.gitlab-ci.yml
+img-publish:
+  stage: emacs
+  variables:
+    CI_REGISTRY_IMAGE: ody55eus/publish
+    CI_REGISTRY_PATH: publish
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE $CI_REGISTRY_PATH
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker push $CI_REGISTRY_IMAGE:latest
+  resource_group: group-emacs
+#+end_src
+
+** GitHub Actions
 This section in the [[file:.github/workflows/dockerimage.yaml][GitHub Actions YAML-Configuration]] asks GitHub to create and push the new docker container on every commit:
 #+name:image-name1
-#+begin_src conf :noweb yes :exports no
+#+begin_src conf :noweb yes :exports none
 publish
 #+end_src
 
@@ -193,11 +260,11 @@ publish
         tags: latest
 #+end_src
 
-** Ana
+* Ana
 This image contains Ana (Python Data Analysis Framework) and other software and data necessary to reproduce the results of my master thesis.
-*** Alpine Linux
+** Alpine Linux
   This [[file:ana/alpine/Dockerfile][Dockerfile]] is based on the latest Linux Alpine (=alpine:latest=) image. It is smaller and contains only the newest and barely necessary packages. This is the preferred image to analyze data.
-**** Dockerfile
+*** Dockerfile
 #+begin_src dockerfile :tangle ana/alpine/Dockerfile
 # Python Analysis Docker Image
 FROM alpine:latest
@@ -262,7 +329,7 @@ WORKDIR /root
 
 #+end_src
 
-**** GitHub Actions
+*** GitHub Actions
 #+begin_src yaml
   build-ana:
 
@@ -285,9 +352,9 @@ WORKDIR /root
         tags: alpine
 #+end_src
 
-*** Python 3.9 / Debian Bullseye (11.0)
+** Python 3.9 / Debian Bullseye (11.0)
   This [[file:ana/bullseye/Dockerfile][Dockerfile]] is based on the latest Debian Linux (=python:3.9-bullseye=) image. Debian provides older, but more stable packages.
-****  Dockerfile
+***  Dockerfile
 #+begin_src dockerfile :tangle ana/bullseye/Dockerfile
 # Python Analysis Docker Image
 FROM python:3.9-bullseye
@@ -343,7 +410,7 @@ WORKDIR /root
 
 #+end_src
 
-**** GitHub Actions
+*** GitHub Actions
 #+begin_src yaml
   build-ana-bullseye:
 
@@ -366,7 +433,7 @@ WORKDIR /root
         tags: bullseye
 #+end_src
 
-** Evaluate
+* Evaluate
 This [[file:evaluate/Dockerfile][Dockerfile]] installs Python and Anaconda on a plain Debian Linux image.
 #+begin_src dockerfile :tangle evaluate/Dockerfile
 # IMAGE: docker build . -t ody55eus/evaluate:base
@@ -405,8 +472,8 @@ WORKDIR /root
 
 #+end_src
 
-** Flowers
-*** Dockerfile
+* Flowers
+** Dockerfile
 This [[file:flowers/Dockerfile][Dockerfile]] installs all software and images necessary to classify flowers. It contains images from two different Kaggle challenges designed to learn the features of flowers. It provides the base image for the flowers project.
 #+begin_src dockerfile :tangle flowers/Dockerfile
 # IMAGE: docker build . -t ody55eus/flowers
@@ -446,7 +513,7 @@ WORKDIR /root
 
 #+end_src
 
-*** Github Actions
+** Github Actions
 #+name:image-name2
 #+begin_src conf :noweb yes
 flowers
@@ -477,7 +544,7 @@ flowers
         tags: latest
 #+end_src
 
-** Trajectory-Recognition
+* Trajectory-Recognition
 This [[file:trajectory-recognition/Dockerfile][Dockerfile]] installs Python and OpenCV together with pybgs to detect a background in a video. It provides the base image for the trajectory-recognition project published on GitLab.
 #+begin_src dockerfile :tangle trajectory-recognition/Dockerfile
 # IMAGE: docker build . -t ody55eus/trajecog:base

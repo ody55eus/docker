@@ -1,0 +1,36 @@
+image: docker:stable
+services:
+- docker:dind
+stages:
+- emacs
+- publish
+variables:
+  DOCKER_PLATFORMS: linux/amd64,linux/arm64/v8
+variables:
+  # Use TLS https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#tls-enabled
+  DOCKER_HOST: tcp://docker:2376
+  DOCKER_TLS_CERTDIR: "/certs"
+before_script:
+  - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+img-emacs-straight:
+  stage: emacs
+  variables:
+    CI_REGISTRY_IMAGE: ody55eus/emacs-straight
+    CI_PATH: emacs-straight
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE $CI_PATH
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker push $CI_REGISTRY_IMAGE:latest
+  resource_group: group-emacs
+
+img-publish:
+  stage: emacs
+  variables:
+    CI_REGISTRY_IMAGE: ody55eus/publish
+    CI_REGISTRY_PATH: publish
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE $CI_REGISTRY_PATH
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker push $CI_REGISTRY_IMAGE:latest
+  resource_group: group-emacs
