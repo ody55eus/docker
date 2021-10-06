@@ -90,9 +90,11 @@ img-emacs-latest:
 This section in the [[file:.github/workflows/dockerimage.yaml][GitHub Actions YAML-Configuration]] asks GitHub to create and push the new docker container on every commit:
 #+begin_src yaml :tangle .github/workflows/dockerimage.yaml :exports none
 name: Build Docker images
+
 on:
   push:
     branches: [ main ]
+
 jobs:
 #+end_src
 
