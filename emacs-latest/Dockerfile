@@ -1,5 +1,5 @@
 # IMAGE: docker build . -t ody55eus/emacs-latest:latest
-FROM debian:latest
+FROM python:3.9-bullseye
 MAINTAINER Jonathan Pieper <jpieper@mailbox.org>
 
 RUN echo "deb-src http://deb.debian.org/debian bullseye main" >> /etc/apt/sources.list

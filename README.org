@@ -33,7 +33,7 @@ Installs the latest version of Emacs from git source.
 ** Dockerfile
 #+begin_src dockerfile :tangle emacs-latest/Dockerfile :mkdirp yes
 # IMAGE: docker build . -t ody55eus/emacs-latest:latest
-FROM debian:latest
+FROM python:3.9-bullseye
 MAINTAINER Jonathan Pieper <jpieper@mailbox.org>
 
 RUN echo "deb-src http://deb.debian.org/debian bullseye main" >> /etc/apt/sources.list
