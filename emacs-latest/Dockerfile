@@ -4,7 +4,7 @@ MAINTAINER Jonathan Pieper <jpieper@mailbox.org>
 
 RUN echo "deb-src http://deb.debian.org/debian bullseye main" >> /etc/apt/sources.list
 RUN apt update --fix-missing && apt upgrade -y && apt install -y \
-    curl git nodejs default-jre cabal-install \
+    curl git make nodejs default-jre python3-pip \
     texlive-science texlive-latex-extra texlive-publishers \
     dvipng man-db cm-super graphviz && \
     apt-get build-dep emacs -y && \
