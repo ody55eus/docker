@@ -29,7 +29,7 @@ Each folder represents a different project.
 - [[#license][License]]
 
 * Emacs-latest
-Installs the latest version of Emacs from git source.
+Installs the latest version of Emacs from git source code.
 ** Dockerfile
 #+begin_src dockerfile :tangle emacs-latest/Dockerfile :mkdirp yes
 # IMAGE: docker build . -t ody55eus/emacs-latest:latest
