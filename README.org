@@ -89,9 +89,19 @@ img-emacs-latest:
 ** GitHub Actions
 This section in the [[file:.github/workflows/dockerimage.yaml][GitHub Actions YAML-Configuration]] asks GitHub to create and push the new docker container on every commit:
 #+begin_src yaml :tangle .github/workflows/dockerimage.yaml :exports none
-name: Docker image
+name: Emacs-Latest Docker image
 
-on: [push]
+on:
+  push:
+    branches:
+      - master
+
+  schedule:
+    # build every week
+    - cron: "0 0 */7 * *"
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 
 jobs:
 #+end_src
