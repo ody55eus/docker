@@ -4,13 +4,12 @@ services:
 stages:
 - emacs
 - publish
-variables:
-  DOCKER_PLATFORMS: linux/amd64,linux/arm64/v8
+# variables:
+#   DOCKER_PLATFORMS: linux/amd64,linux/arm64/v8
 variables:
   # Use TLS https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#tls-enabled
   DOCKER_HOST: tcp://docker:2376
   DOCKER_TLS_CERTDIR: "/certs"
-  CI_REGISTRY: registry:5000
 before_script:
   - docker info
   - cat /etc/docker/daemon.json
