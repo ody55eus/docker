@@ -21,6 +21,7 @@ Each folder represents a different project.
 - [[#ana][Ana]]
   - [[#alpine-linux][Alpine Linux]]
   - [[#python-39--debian-bullseye-110][Python 3.9 / Debian Bullseye (11.0)]]
+  - [[#gitlab-cicd-3][GitLab CI/CD]]
 - [[#evaluate][Evaluate]]
 - [[#flowers][Flowers]]
   - [[#dockerfile-3][Dockerfile]]
@@ -63,12 +64,14 @@ services:
 stages:
 - emacs
 - publish
-variables:
-  DOCKER_PLATFORMS: linux/amd64,linux/arm64/v8
+- ana
+# variables:
+#   DOCKER_PLATFORMS: linux/amd64,linux/arm64/v8
 variables:
   # Use TLS https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#tls-enabled
   DOCKER_HOST: tcp://docker:2376
   DOCKER_TLS_CERTDIR: "/certs"
+  CI_REGISTRY_BASE: ${CI_REGISTRY}/${CI_PROJECT_PATH}
 before_script:
   - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
 #+end_src
@@ -77,7 +80,7 @@ before_script:
 img-emacs-latest:
   stage: emacs
   variables:
-    CI_REGISTRY_IMAGE: ody55eus/emacs-latest
+    CI_REGISTRY_IMAGE: ${CI_REGISTRY_BASE}/emacs-latest
     CI_PATH: emacs-latest
   script:
     - docker build -t $CI_REGISTRY_IMAGE $CI_PATH
@@ -192,11 +195,11 @@ RUN emacs --quick --script /root/.emacs.d/init.el
 
 ** GitLab CI/CD
 
-#+begin_src yaml
+#+begin_src yaml :tangle ./.gitlab-ci.yml :exports none
 img-emacs-straight:
   stage: emacs
   variables:
-    CI_REGISTRY_IMAGE: ody55eus/emacs-straight
+    CI_REGISTRY_IMAGE: ${CI_REGISTRY_BASE}/emacs-straight
     CI_PATH: emacs-straight
   script:
     - docker build -t $CI_REGISTRY_IMAGE $CI_PATH
@@ -298,11 +301,11 @@ WORKDIR /root
 #+end_src
 
 ** GitLab CI/CD
-#+begin_src yaml
+#+begin_src yaml :tangle ./.gitlab-ci.yml :exports none
 img-publish:
-  stage: emacs
+  stage: publish
   variables:
-    CI_REGISTRY_IMAGE: ody55eus/publish
+    CI_REGISTRY_IMAGE: ${CI_REGISTRY_BASE}/publish
     CI_REGISTRY_PATH: publish
   script:
     - docker build -t $CI_REGISTRY_IMAGE $CI_REGISTRY_PATH
@@ -509,6 +512,21 @@ WORKDIR /root
         repository: ody55eus/ana
         dockerfile: ana/bullseye/Dockerfile
         tags: bullseye
+#+end_src
+
+** GitLab CI/CD
+#+begin_src yaml :tangle ./.gitlab-ci.yml :exports none
+img-ana:
+  stage: ana
+  variables:
+    CI_REGISTRY_IMAGE: ${CI_REGISTRY_BASE}/ana
+    CI_REGISTRY_PATH: ana
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE:alpine $CI_REGISTRY_PATH/alpine
+    - docker push $CI_REGISTRY_IMAGE:alpine
+    - docker build -t $CI_REGISTRY_IMAGE:bullseye $CI_REGISTRY_PATH/bullseye
+    - docker push $CI_REGISTRY_IMAGE:bullseye
+  resource_group: group-emacs
 #+end_src
 
 * Evaluate
