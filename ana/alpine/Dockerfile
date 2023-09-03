@@ -33,8 +33,7 @@ RUN touch /root/.ssh/known_hosts && \
 # Download and install analysis software and data
 RUN mkdir /opt/lab-book && \
     git clone ssh://git@gitlab.ody5.de:223/agm/spectrumanalyzer.git /opt/lab-book/spectrumanalyzer && \
-    git clone --recursive ssh://git@gitlab.ody5.de:223/agm/ana.git /opt/lab-book/ana && \
-    git clone ssh://git@gitlab.ody5.de:223/agm/method-paper.git /root/Projects/Code/method-paper
+    git clone --recursive ssh://git@gitlab.ody5.de:223/agm/ana.git /opt/lab-book/ana
 
 # Remove private SSH Key so nobody can use it.
 RUN rm /root/.ssh/id_rsa
@@ -54,7 +53,6 @@ RUN apk --no-cache del build-base
 
 # Link Projects
 RUN mkdir -p /root/Projects/Code && \
-    ln -s /root/Projects/Code/method-paper /root/Projects/Method-Paper && \
     ln -s /opt/lab-book /root/Projects/Code/lab-book
 
 WORKDIR /root
