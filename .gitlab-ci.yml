@@ -17,6 +17,7 @@ img-emacs-latest:
     CI_PATH: emacs-latest
   script:
     - docker build -t $CI_REGISTRY_IMAGE $CI_PATH
+    - docker tag $CI_REGISTRY_IMAGE:latest $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
     - docker push $CI_REGISTRY_IMAGE:latest
   resource_group: group-emacs
@@ -28,6 +29,7 @@ img-publish:
     CI_REGISTRY_PATH: publish
   script:
     - docker build -t $CI_REGISTRY_IMAGE $CI_REGISTRY_PATH
+    - docker tag $CI_REGISTRY_IMAGE:latest $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
     - docker push $CI_REGISTRY_IMAGE:latest
   resource_group: group-emacs
