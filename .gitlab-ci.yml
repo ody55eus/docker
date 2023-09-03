@@ -21,15 +21,3 @@ img-emacs-latest:
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
     - docker push $CI_REGISTRY_IMAGE:latest
   resource_group: group-emacs
-
-img-ana:
-  stage: ana
-  variables:
-    CI_REGISTRY_IMAGE: ${CI_REGISTRY_BASE}/ana
-    CI_REGISTRY_PATH: ana
-  script:
-    - docker build -t $CI_REGISTRY_IMAGE:alpine $CI_REGISTRY_PATH/alpine
-    - docker push $CI_REGISTRY_IMAGE:alpine
-    - docker build -t $CI_REGISTRY_IMAGE:bookworm $CI_REGISTRY_PATH/bookworm
-    - docker push $CI_REGISTRY_IMAGE:bookworm
-  resource_group: group-emacs
