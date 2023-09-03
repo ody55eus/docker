@@ -8,24 +8,19 @@ Each folder represents a different project.
   - [[#dockerfile][Dockerfile]]
   - [[#gitlab-cicd][GitLab CI/CD]]
   - [[#github-actions][GitHub Actions]]
-- [[#emacs-straight][Emacs-Straight]]
-  - [[#straightel][Straight.el]]
+- [[#publish][Publish]]
+  - [[#plantuml][PlantUML]]
   - [[#dockerfile-1][Dockerfile]]
   - [[#gitlab-cicd-1][GitLab CI/CD]]
   - [[#github-actions-1][GitHub Actions]]
-- [[#publish][Publish]]
-  - [[#plantuml][PlantUML]]
-  - [[#dockerfile-2][Dockerfile]]
-  - [[#gitlab-cicd-2][GitLab CI/CD]]
-  - [[#github-actions-2][GitHub Actions]]
 - [[#ana][Ana]]
   - [[#alpine-linux][Alpine Linux]]
-  - [[#python-39--debian-bullseye-110][Python 3.9 / Debian Bullseye (11.0)]]
-  - [[#gitlab-cicd-3][GitLab CI/CD]]
+  - [[#python-39--debian-bookworm-120][Python 3.9 / Debian Bookworm (12.0)]]
+  - [[#gitlab-cicd-2][GitLab CI/CD]]
 - [[#evaluate][Evaluate]]
 - [[#flowers][Flowers]]
-  - [[#dockerfile-3][Dockerfile]]
-  - [[#github-actions-3][Github Actions]]
+  - [[#dockerfile-2][Dockerfile]]
+  - [[#github-actions-2][Github Actions]]
 - [[#trajectory-recognition][Trajectory-Recognition]]
 - [[#license][License]]
 
@@ -34,10 +29,10 @@ Installs the latest version of Emacs from git source code.
 ** Dockerfile
 #+begin_src dockerfile :tangle emacs-latest/Dockerfile :mkdirp yes
 # IMAGE: docker build . -t ody55eus/emacs-latest:latest
-FROM python:3.9-bullseye
+FROM debian:bookworm
 MAINTAINER Jonathan Pieper <jpieper@mailbox.org>
 
-RUN echo "deb-src http://deb.debian.org/debian bullseye main" >> /etc/apt/sources.list
+RUN echo "deb-src http://deb.debian.org/debian bookworm main" >> /etc/apt/sources.list
 RUN apt update --fix-missing && apt upgrade -y && apt install -y \
     curl git make nodejs default-jre python3-pip \
     texlive-science texlive-latex-extra texlive-publishers latexmk \
@@ -65,12 +60,7 @@ stages:
 - emacs
 - publish
 - ana
-# variables:
-#   DOCKER_PLATFORMS: linux/amd64,linux/arm64/v8
 variables:
-  # Use TLS https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#tls-enabled
-  DOCKER_HOST: tcp://docker:2376
-  DOCKER_TLS_CERTDIR: "/certs"
   CI_REGISTRY_BASE: ${CI_REGISTRY}/${CI_PROJECT_PATH}
 before_script:
   - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
@@ -129,113 +119,6 @@ jobs:
         tags: latest
 #+end_src
 
-* Emacs-Straight
-Builds on [[*Publish][Publish]] and installs the package manager straight.el.
-** Straight.el
-There's a [[https://systemcrafters.cc/advanced-package-management/using-straight-el/][System Crafters project]] about installation and usage of straight.
-
-#+begin_src emacs-lisp :exports none :tangle emacs-straight/straight.el
-;;; straight.el --- ody55eus/emacs-straight-*- lexical-binding: t; -*-
-;;
-;; Copyright (C) 2021 Jonathan Pieper
-;;
-;; Author: Jonathan Pieper <https://github.com/jp>
-;; Maintainer: Jonathan Pieper <ody55eus@mailbox.org>
-;; Created: September 24, 2021
-;; Modified: September 24, 2021
-;; Version: 0.0.1
-;; Keywords: abbrev bib c calendar comm convenience data docs emulations extensions faces files frames games hardware help hypermedia i18n internal languages lisp local maint mail matching mouse multimedia news outlines processes terminals tex tools unix vc wp
-;; Homepage: https://github.com/jp/packages
-;; Package-Requires: ((emacs "24.3"))
-;;
-;; This file is not part of GNU Emacs.
-;;
-;;; Commentary:
-;;
-;;
-;;
-;;; Code:
-#+end_src
-
-*** Install Straight via Bootstrap
-#+begin_src emacs-lisp :tangle emacs-straight/straight.el
-(defvar bootstrap-version)
-(let ((bootstrap-file
-       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-      (bootstrap-version 5))
-  (unless (file-exists-p bootstrap-file)
-    (with-current-buffer
-        (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
-         'silent 'inhibit-cookies)
-      (goto-char (point-max))
-      (eval-print-last-sexp)))
-  (load bootstrap-file nil 'nomessage))
-#+end_src
-
-*** Install Packages
-#+begin_src emacs-lisp :tangle emacs-straight/straight.el :noweb yes
-(straight-use-package 'org-roam)
-(straight-use-package 'plantuml-mode)
-(setq plantuml-jar-path "<<puml-file>>")
-(unless (file-exists-p plantuml-jar-path)
-  (plantuml-download-jar))
-#+end_src
-
-** Dockerfile
-#+begin_src dockerfile :tangle emacs-straight/Dockerfile
-# IMAGE: docker build . -t ody55eus/emacs-straight:latest
-FROM ody55eus/publish
-MAINTAINER Jonathan Pieper <jpieper@mailbox.org>
-
-RUN mkdir -p /root/.emacs.d
-COPY emacs-straight/straight.el /root/.emacs.d/init.el
-RUN emacs --quick --script /root/.emacs.d/init.el
-#+end_src
-
-** GitLab CI/CD
-
-#+begin_src yaml :tangle ./.gitlab-ci.yml :exports none
-img-emacs-straight:
-  stage: emacs
-  variables:
-    CI_REGISTRY_IMAGE: ${CI_REGISTRY_BASE}/emacs-straight
-    CI_PATH: emacs-straight
-  script:
-    - docker build -t $CI_REGISTRY_IMAGE $CI_PATH
-    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
-    - docker push $CI_REGISTRY_IMAGE:latest
-  resource_group: group-emacs
-#+end_src
-
-** GitHub Actions
-This section in the [[file:.github/workflows/dockerimage.yaml][GitHub Actions YAML-Configuration]] asks GitHub to create and push the new docker container on every commit:
-
-#+name:image-straight
-#+begin_src conf :noweb yes :exports none
-emacs-straight
-#+end_src
-
-#+begin_src yaml :noweb yes
-  build-<<image-straight>>:
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-    - name: Checkout
-      uses: actions/checkout@v2
-
-    - name: Build the <<image-straight>> Docker image
-      uses: docker/build-push-action@v1
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-        repository: ody55eus/<<image-straight>>
-        dockerfile: <<image-straight>>/Dockerfile
-        tags: latest
-#+end_src
-
 * Publish
 An image to publish documents via \LaTeX, pandoc, PlantUML, and Emacs.
 ** PlantUML
@@ -248,13 +131,13 @@ This Dockerfile installs PlantUML as ~.jar~ file inside ~/usr/local/bin/plantuml
 ** Dockerfile
 #+begin_src dockerfile :tangle publish/Dockerfile :noweb yes
 # IMAGE: docker build . -t ody55eus/publish:latest
-FROM python:3.9-bullseye
+FROM debian:bookworm
 MAINTAINER Jonathan Pieper <ody55eus@mailbox.org>
 
 # Install system packages
 RUN apt-get update --fix-missing && apt-get upgrade -y && \
     apt-get install -y \
-    curl git nodejs default-jre cabal-install \
+    curl git nodejs default-jre cabal-install python3-pip \
     texlive-science texlive-latex-extra texlive-publishers \
     dvipng man-db cm-super graphviz emacs && \
     apt-get --purge remove -y .\*-doc$ && \
@@ -431,12 +314,12 @@ WORKDIR /root
         tags: alpine
 #+end_src
 
-** Python 3.9 / Debian Bullseye (11.0)
-  This [[file:ana/bullseye/Dockerfile][Dockerfile]] is based on the latest Debian Linux (=python:3.9-bullseye=) image. Debian provides older, but more stable packages.
+** Python 3.9 / Debian Bookworm (12.0)
+  This [[file:ana/bullseye/Dockerfile][Dockerfile]] is based on the latest Debian Linux (=bookworm=) image. Debian provides older, but more stable packages.
 ***  Dockerfile
-#+begin_src dockerfile :tangle ana/bullseye/Dockerfile
+#+begin_src dockerfile :tangle ana/bookworm/Dockerfile
 # Python Analysis Docker Image
-FROM python:3.9-bullseye
+FROM debian:bookworm
 MAINTAINER Jonathan Pieper <ody55eus@mailbox.org>
 
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
@@ -489,7 +372,7 @@ WORKDIR /root
 
 *** GitHub Actions
 #+begin_src yaml
-  build-ana-bullseye:
+  build-ana-bookworm:
 
     runs-on: ubuntu-latest
 
@@ -498,7 +381,7 @@ WORKDIR /root
     - name: Checkout
       uses: actions/checkout@v2
 
-    - name: Build the ana bullseye Docker image
+    - name: Build the ana bookworm Docker image
       uses: docker/build-push-action@v1
       env:
         SSH_PRIVATE_KEY: ${{ secrects.SSH_PRIVATE_KEY }}
@@ -506,8 +389,8 @@ WORKDIR /root
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
         repository: ody55eus/ana
-        dockerfile: ana/bullseye/Dockerfile
-        tags: bullseye
+        dockerfile: ana/bookworm/Dockerfile
+        tags: bookworm
 #+end_src
 
 ** GitLab CI/CD
@@ -520,8 +403,8 @@ img-ana:
   script:
     - docker build -t $CI_REGISTRY_IMAGE:alpine $CI_REGISTRY_PATH/alpine
     - docker push $CI_REGISTRY_IMAGE:alpine
-    - docker build -t $CI_REGISTRY_IMAGE:bullseye $CI_REGISTRY_PATH/bullseye
-    - docker push $CI_REGISTRY_IMAGE:bullseye
+    - docker build -t $CI_REGISTRY_IMAGE:bookworm $CI_REGISTRY_PATH/bookworm
+    - docker push $CI_REGISTRY_IMAGE:bookworm
   resource_group: group-emacs
 #+end_src
 

@@ -1,5 +1,5 @@
 # Python Analysis Docker Image
-FROM python:3.9-bullseye
+FROM debian:bookworm
 MAINTAINER Jonathan Pieper <ody55eus@mailbox.org>
 
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8

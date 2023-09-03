@@ -1,11 +1,11 @@
 # IMAGE: docker build . -t ody55eus/publish:latest
-FROM python:3.9-bullseye
+FROM debian:bookworm
 MAINTAINER Jonathan Pieper <ody55eus@mailbox.org>
 
 # Install system packages
 RUN apt-get update --fix-missing && apt-get upgrade -y && \
     apt-get install -y \
-    curl git nodejs default-jre cabal-install \
+    curl git nodejs default-jre cabal-install python3-pip \
     texlive-science texlive-latex-extra texlive-publishers \
     dvipng man-db cm-super graphviz emacs && \
     apt-get --purge remove -y .\*-doc$ && \

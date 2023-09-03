@@ -5,12 +5,7 @@ stages:
 - emacs
 - publish
 - ana
-# variables:
-#   DOCKER_PLATFORMS: linux/amd64,linux/arm64/v8
 variables:
-  # Use TLS https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#tls-enabled
-  # DOCKER_HOST: tcp://docker:2376
-  # DOCKER_TLS_CERTDIR: "/certs"
   CI_REGISTRY_BASE: ${CI_REGISTRY}/${CI_PROJECT_PATH}
 before_script:
   - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
@@ -20,17 +15,6 @@ img-emacs-latest:
   variables:
     CI_REGISTRY_IMAGE: ${CI_REGISTRY_BASE}/emacs-latest
     CI_PATH: emacs-latest
-  script:
-    - docker build -t $CI_REGISTRY_IMAGE $CI_PATH
-    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
-    - docker push $CI_REGISTRY_IMAGE:latest
-  resource_group: group-emacs
-
-img-emacs-straight:
-  stage: emacs
-  variables:
-    CI_REGISTRY_IMAGE: ${CI_REGISTRY_BASE}/emacs-straight
-    CI_PATH: emacs-straight
   script:
     - docker build -t $CI_REGISTRY_IMAGE $CI_PATH
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
@@ -56,6 +40,6 @@ img-ana:
   script:
     - docker build -t $CI_REGISTRY_IMAGE:alpine $CI_REGISTRY_PATH/alpine
     - docker push $CI_REGISTRY_IMAGE:alpine
-    - docker build -t $CI_REGISTRY_IMAGE:bullseye $CI_REGISTRY_PATH/bullseye
-    - docker push $CI_REGISTRY_IMAGE:bullseye
+    - docker build -t $CI_REGISTRY_IMAGE:bookworm $CI_REGISTRY_PATH/bookworm
+    - docker push $CI_REGISTRY_IMAGE:bookworm
   resource_group: group-emacs
