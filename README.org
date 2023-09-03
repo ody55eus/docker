@@ -183,7 +183,7 @@ WORKDIR /root
 #+end_src
 
 *** GitHub Actions
-#+begin_src yaml
+#+begin_src yaml :tangle .github/workflows/dockerimage.yaml :exports none
   build-ana:
 
     runs-on: ubuntu-latest
@@ -262,7 +262,7 @@ WORKDIR /root
 #+end_src
 
 *** GitHub Actions
-#+begin_src yaml
+#+begin_src yaml :tangle .github/workflows/dockerimage.yaml :exports none
   build-ana-bookworm:
 
     runs-on: ubuntu-latest
@@ -334,8 +334,6 @@ RUN conda create -n py37 -y python=3.7 \
       notebook
 
 WORKDIR /root
-
-
 #+end_src
 
 * Flowers
@@ -375,8 +373,6 @@ RUN unzip flower-goggle-tpu-classification.zip && rm flower-goggle-tpu-classific
 RUN rm /root/.kaggle/kaggle.json
 
 WORKDIR /root
-
-
 #+end_src
 
 ** Github Actions
@@ -437,8 +433,6 @@ RUN pip3 install numpy virtualenv opencv-python scikit-learn scikit-image
 RUN pip3 install pybgs
 
 WORKDIR /root
-
-
 #+end_src
 
 * License
