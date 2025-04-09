@@ -1,5 +1,5 @@
 # IMAGE: docker build . -t ody55eus/emacs-latest:latest
-FROM debian:bookworm
+FROM debian:12.10
 MAINTAINER Jonathan Pieper <jpieper@mailbox.org>
 
 RUN echo "deb-src http://deb.debian.org/debian bookworm main" >> /etc/apt/sources.list
