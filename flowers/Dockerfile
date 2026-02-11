@@ -1,5 +1,5 @@
 # IMAGE: docker build . -t ody55eus/flowers
-FROM python:3.7
+FROM python:3.14.3
 
 WORKDIR /root
 
